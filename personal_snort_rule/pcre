@@ -17957,7 +17957,6 @@
 /^AUTH\s+\S+\s+[^\n]{128}/mi
 /^\s*MAIL\s+[^\s\n][^\n]{1006,}/smi
 /^STARTTLS/smi
-/x-unix-mode\s*\x3D\s*(?(?=\d{4})[0-7]([1357][0-7]{2}|[0-7][1357][0-7]|[0-7]{2}[1357])|([1357][0-7]{2}|[0-7][1357][0-7]|[0-7]{2}[1357]))/smi
 /^552[A-Z0-9\s\x5F\x2D\x2E\x28\x29\x22\x27]+Headers\s+too\s+large/smi
 /^Content-Transfer-Encoding\s*\x3A\s*base64/smi
 /[^\x0d\x00\x0a]{509}/
