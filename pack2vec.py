@@ -59,7 +59,7 @@ class Snort:
                 malware_payload = regexEngn.search(payload)
                 if not malware_payload:
                     continue
-                self.log.append(packet[0], regexRule, malware_payload.group(0), payload)
+                self.log.append((packet[0], regexRule, malware_payload.group(0), payload))
                 print("---Pattern matched---")
                 break
         self.__serialize__(outputName)
