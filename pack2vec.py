@@ -33,7 +33,7 @@ class Snort:
 
     def __serialize__(self, filename):
         '''
-
+        직렬화
         '''
         with open(filename,mode="wb+") as output:
             pickle.dump(self.log, output)
