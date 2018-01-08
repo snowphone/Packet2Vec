@@ -44,8 +44,9 @@ class Snort:
                 malware_payload = pattern.search(payload)
                 if not malware_payload:
                     continue
-                log = "Rule: "+ pattern + "\nDetected pattern: "+ malware_payload.group()+ "\nPayload: "+ payload + "\n\n"
+                log = "Time: "+ packet[0] + "\nDetected pattern: "+ malware_payload.group()+ "\nPayload: "+ payload + "\n\n"
                 output.write(log)
+                print("---Pattern matched---")
                 break
         output.close()
         return
