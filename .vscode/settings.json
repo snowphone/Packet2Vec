@@ -1,0 +1,7 @@
+{
+	"python.linting.pylintEnabled": false,
+	"files.associations": {
+		"ostream": "cpp"
+	},
+	"python.pythonPath": "C:\\Users\\JunOh\\Anaconda3\\envs\\tensorflow\\python.exe"
+}
