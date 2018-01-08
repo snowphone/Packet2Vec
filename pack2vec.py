@@ -38,7 +38,7 @@ class Snort:
     def Search(self, outputName):
         output = open(outputName,mode="w+")
         for packet in self.packets:
-            print("checking for", packets[0], "last packet:", self.packets[-1][0])
+            print("checking for", packet[0], "last packet:", self.packets[-1][0])
             payload = packet[-1]
             for pattern in self.patterns:
                 malware_payload = pattern.search(payload)
