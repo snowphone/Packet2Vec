@@ -74,6 +74,9 @@ class Parser:
 
 
 def Deserialize(filename):
+    '''
+    pickle을 통해 역 직렬화 함
+    '''
     with open(filename, "rb") as f:
         ret = pickle.load(f)
     return ret
