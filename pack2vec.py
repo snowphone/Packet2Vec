@@ -4,35 +4,51 @@ import sys
 
 def main():
     '''
-    인자: 직렬화된 패킷 덤프들
-    출력: '덤프 이름'.pattern 형태
+    인자: 직렬화된 패킷 
+    출력: '덤프 이름'.mal 형태
     '''
     if len(sys.argv) <= 1:
         #sample data
-        sys.argv = [None, "../inside.tcpdump_fri.ascii_out.ser"]
+        print("No arguments")
+        return
 
-    with open("pcre") as f:
+    patterns = CompilePatterns("pcre")
+
+    for name in sys.argv[1:]:
+        packets = Parser.Deserialize(name)
+        snort = Snort(packets,patterns)
+        snort.Search(name+".mal")
+    return
+
+
+def CompilePatterns(filename):
+    with open(filename) as f:
         rules = f.readlines().rstrip()
     patterns = []   #snort_rule pcre patterns
     for rule in rules:
         patterns.append(re.compile(rule))
+    return patterns
 
-    for name in sys.argv[1:]:
-        output = open(name+".pattern")
-        packets = Parser.Deserialize(name)
-        for packet in packets:
-            print("checking for", packets[0], "last packet:", packets[-1][0])
+class Snort:
+    def __init__(self, packets, patterns):
+        self.packets = packets
+        self.patterns = patterns
+        return
+
+    def Search(self, outputName):
+        output = open(outputName,mode="r+")
+        for packet in self.packets:
+            print("checking for", packets[0], "last packet:", self.packets[-1][0])
             payload = packet[-1]
-            for pattern in patterns:
+            for pattern in self.patterns:
                 malware_payload = pattern.search(payload)
                 if not malware_payload:
                     continue
                 log = "Rule: "+ regex_rule+ "\nDetected pattern: "+ malware_payload.group()+ "\nPayload: "+ payload + "\n\n"
                 output.write(log)
-
-                break   #examine next payload
+                break
         output.close()
-    return
+        return
 
 if __name__ == "__main__":
     main()
