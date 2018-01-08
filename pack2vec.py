@@ -1,4 +1,4 @@
-mport Parser
+import Parser
 import re
 import sys
 
@@ -8,7 +8,7 @@ def main():
     '''
     if len(sys.argv) <= 1:
         #sample data
-        sys.argv = [None, "inside.tcpdump_fri.ascii_out.ser"]
+        sys.argv = [None, "../inside.tcpdump_fri.ascii_out.ser"]
 
     with open("pcre") as f:
         rules = f.readlines().rstrip()
