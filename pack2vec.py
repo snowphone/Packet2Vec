@@ -23,10 +23,10 @@ def main():
 
 def CompilePatterns(filename):
     with open(filename) as f:
-        rules = f.readlines().rstrip()
+        rules = f.readlines()
     patterns = []   #snort_rule pcre patterns
     for rule in rules:
-        patterns.append(re.compile(rule))
+        patterns.append(re.compile(rule.rstrip()))
     return patterns
 
 class Snort:
