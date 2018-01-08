@@ -35,8 +35,11 @@ class Snort:
         self.patterns = patterns
         return
 
-    def Search(self, outputName):
-        output = open(outputName,mode="w+")
+    def Search(self, outputName=None):
+        if outputName == None:
+            output = sys.stdout
+        else:
+            output = open(outputName,mode="w+")
         for packet in self.packets:
             print("checking for", packet[0], ", last packet:", self.packets[-1][0])
             payload = packet[-1]
@@ -44,7 +47,7 @@ class Snort:
                 malware_payload = pattern.search(payload)
                 if not malware_payload:
                     continue
-                log = "Time: "+ packet[0] + "\nDetected pattern: "+ malware_payload.group()+ "\nPayload: "+ payload + "\n\n"
+                log = "Time: "+ packet[0] + "\nDetected pattern: "+ malware_payload.group(0)+ "\nPayload: "+ payload + "\n\n"
                 output.write(log)
                 print("---Pattern matched---")
                 break
