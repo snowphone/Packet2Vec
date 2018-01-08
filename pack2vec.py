@@ -36,7 +36,7 @@ class Snort:
         return
 
     def Search(self, outputName):
-        output = open(outputName,mode="r+")
+        output = open(outputName,mode="w+")
         for packet in self.packets:
             print("checking for", packets[0], "last packet:", self.packets[-1][0])
             payload = packet[-1]
