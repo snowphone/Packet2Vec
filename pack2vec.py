@@ -4,17 +4,17 @@ import sys
 
 def main():
     '''
-    인자: 직렬화된 패킷 
+    인자: regex_pattern, packets1, packets2, ...
     출력: '덤프 이름'.mal 형태
     '''
-    if len(sys.argv) <= 1:
+    if len(sys.argv) < 3:
         #sample data
         print("No arguments")
         return
 
-    patterns = CompilePatterns("pcre")
+    patterns = CompilePatterns(sys.argv[1])
 
-    for name in sys.argv[1:]:
+    for name in sys.argv[2:]:
         packets = Parser.Deserialize(name)
         snort = Snort(packets,patterns)
         snort.Search(name+".mal")
