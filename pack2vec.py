@@ -38,13 +38,13 @@ class Snort:
     def Search(self, outputName):
         output = open(outputName,mode="w+")
         for packet in self.packets:
-            print("checking for", packet[0], "last packet:", self.packets[-1][0])
+            print("checking for", packet[0], ", last packet:", self.packets[-1][0])
             payload = packet[-1]
             for pattern in self.patterns:
                 malware_payload = pattern.search(payload)
                 if not malware_payload:
                     continue
-                log = "Rule: "+ regex_rule+ "\nDetected pattern: "+ malware_payload.group()+ "\nPayload: "+ payload + "\n\n"
+                log = "Rule: "+ pattern + "\nDetected pattern: "+ malware_payload.group()+ "\nPayload: "+ payload + "\n\n"
                 output.write(log)
                 break
         output.close()
