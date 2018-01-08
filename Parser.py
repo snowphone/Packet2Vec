@@ -83,6 +83,10 @@ def Deserialize(filename):
 
 
 def main():
+    '''
+    인자: dump 파일, output 파일 이름, 파싱 방법(ascii, hex)
+    Pickle을 통해 binary로 직렬화
+    '''
     if len(sys.argv) > 2:
         filename = sys.argv[1]
         output = sys.argv[2]
