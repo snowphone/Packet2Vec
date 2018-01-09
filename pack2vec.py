@@ -14,7 +14,7 @@ def main():
         print("No arguments")
         return
 
-    patterns = CompilePatterns(sys.argv[1])
+    Snort.CompilePatterns(sys.argv[1])
 
     with multiprocessing.pool.Pool(24) as pool:
         fn = lambda name: Snort(Parser.Deserialize(name),patterns).Search(name+".malware")
@@ -24,9 +24,9 @@ def main():
 
 
 class Snort:
+    self.patterns = []
     def __init__(self, packets):
         self.packets = packets
-        self.patterns = []
         self.log = []
         self.rules = []
         return
