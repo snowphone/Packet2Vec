@@ -1,4 +1,5 @@
 import Parser
+import pickle
 import re
 import sys
 
@@ -21,37 +22,47 @@ def main():
     return
 
 
-def CompilePatterns(filename):
-    with open(filename) as f:
-        rules = f.readlines()
-    patterns = []   #snort_rule pcre patterns
-    for rule in rules:
-        patterns.append(re.compile(rule.rstrip()))
-    return patterns
 
 class Snort:
-    def __init__(self, packets, patterns):
+    def __init__(self, packets):
         self.packets = packets
-        self.patterns = patterns
+        self.patterns = []
+        self.log = []
+        self.rules = []
+        return
+
+    def __serialize__(self, filename):
+        '''
+
+        '''
+        with open(filename,mode="wb+") as output:
+            pickle.dump(self.log, output)
+        return
+
+    def CompilePatterns(self, filename):
+        '''
+        각각의 정규식을 읽어와 리스트에 저장한다.
+        '''
+        with open(filename) as f:
+            self.rules = [rule.rstrip() for rule in f.readlines()]
+        self.patterns = [re.compile(rule.rstrip()) for rule in self.rules]
         return
 
     def Search(self, outputName=None):
-        if outputName == None:
-            output = sys.stdout
-        else:
-            output = open(outputName,mode="w+")
+        '''
+        snort_rule에 걸리는 패킷을 모아 (패킷 시각, 정규식, 일치한 패턴, 페이로드)를 직렬화해 저장한다.
+        '''
         for packet in self.packets:
             print("checking for", packet[0], ", last packet:", self.packets[-1][0])
             payload = packet[-1]
-            for pattern in self.patterns:
-                malware_payload = pattern.search(payload)
+            for regexEngn, regexRule in zip(self.patterns, self.rules):
+                malware_payload = regexEngn.search(payload)
                 if not malware_payload:
                     continue
-                log = "Time: "+ packet[0] + "\nDetected pattern: "+ malware_payload.group(0)+ "\nPayload: "+ payload + "\n\n"
-                output.write(log)
+                self.log.append(packet[0], regexRule, malware_payload.group(0), payload)
                 print("---Pattern matched---")
                 break
-        output.close()
+        self.__serialize__(outputName)
         return
 
 if __name__ == "__main__":
