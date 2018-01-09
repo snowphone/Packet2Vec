@@ -24,7 +24,7 @@ def main():
 
 
 class Snort:
-    self.patterns = []
+    patterns = []
     def __init__(self, packets):
         self.packets = packets
         self.log = []
