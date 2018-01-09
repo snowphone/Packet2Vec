@@ -2,6 +2,7 @@ import Parser
 import pickle
 import re
 import sys
+import multiprocessing
 
 def main():
     '''
@@ -13,12 +14,11 @@ def main():
         print("No arguments")
         return
 
+    patterns = CompilePatterns(sys.argv[1])
 
-    for name in sys.argv[2:]:
-        packets = Parser.Deserialize(name)
-        snort = Snort(packets)
-        snort.CompilePatterns(sys.argv[1])
-        snort.Search(name+".mal")
+    with multiprocessing.pool.Pool(24) as pool:
+        fn = lambda name: Snort(Parser.Deserialize(name),patterns).Search(name+".malware")
+        list(pool.map_async(fn, sys.argv[2:]))    
     return
 
 
@@ -32,9 +32,6 @@ class Snort:
         return
 
     def __serialize__(self, filename):
-        '''
-        직렬화
-        '''
         with open(filename,mode="wb+") as output:
             pickle.dump(self.log, output)
         return
