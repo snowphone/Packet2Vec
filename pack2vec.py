@@ -13,11 +13,11 @@ def main():
         print("No arguments")
         return
 
-    patterns = CompilePatterns(sys.argv[1])
 
     for name in sys.argv[2:]:
         packets = Parser.Deserialize(name)
-        snort = Snort(packets,patterns)
+        snort = Snort(packets)
+        snort.CompilePatterns(sys.argv[1])
         snort.Search(name+".mal")
     return
 
