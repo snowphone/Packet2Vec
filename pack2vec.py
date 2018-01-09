@@ -14,7 +14,7 @@ def main():
         print("No arguments")
         return
 
-    with open(filename) as f:
+    with open(sys.argv[1]) as f:
         rules = [rule.rstrip() for rule in f.readlines()]
     patterns = [re.compile(rule.rstrip()) for rule in rules]
 
