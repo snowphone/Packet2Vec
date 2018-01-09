@@ -14,21 +14,21 @@ def main():
         print("No arguments")
         return
 
-    Snort.CompilePatterns(sys.argv[1])
+    with open(filename) as f:
+        rules = [rule.rstrip() for rule in f.readlines()]
+    patterns = [re.compile(rule.rstrip()) for rule in rules]
 
     with multiprocessing.pool.Pool(24) as pool:
-        fn = lambda name: Snort(Parser.Deserialize(name),patterns).Search(name+".malware")
+        fn = lambda name: Snort(Parser.Deserialize(name), rules, patterns).Search(name+".malware")
         list(pool.map_async(fn, sys.argv[2:]))    
     return
 
-
-
 class Snort:
-    patterns = []
-    def __init__(self, packets):
+    def __init__(self, packets, rules, patterns):
         self.packets = packets
         self.log = []
-        self.rules = []
+        self.rules = rules  #정규식 스트링
+        self.patterns = patterns #컴파일된 정규식 엔진
         return
 
     def __serialize__(self, filename):
@@ -36,14 +36,6 @@ class Snort:
             pickle.dump(self.log, output)
         return
 
-    def CompilePatterns(self, filename):
-        '''
-        각각의 정규식을 읽어와 리스트에 저장한다.
-        '''
-        with open(filename) as f:
-            self.rules = [rule.rstrip() for rule in f.readlines()]
-        self.patterns = [re.compile(rule.rstrip()) for rule in self.rules]
-        return
 
     def Search(self, outputName=None):
         '''
