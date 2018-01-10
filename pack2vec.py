@@ -4,7 +4,7 @@ import sys
 import multiprocessing
 
 import Parser
-from Snort import *
+import Snort
 
 def main():
     '''
@@ -20,11 +20,10 @@ def main():
         rules = [rule.rstrip() for rule in f.readlines()]
     patterns = [re.compile(rule.rstrip()) for rule in rules]
 
-    with multiprocessing.pool.Pool(4) as pool:
-        fn = lambda name: Snort(Parser.Deserialize(name), rules, patterns).Search(name+".malware")
-        list(pool.map_async(fn, sys.argv[2:]))    
+    with multiprocessing.Pool(4) as pool:
+        fn = lambda path: Snort.Search(path+".malware", Parser.Deserialize(path), rules, patterns)
+        pool.map_async(fn, sys.argv[2:])
     return
-
 
 if __name__ == "__main__":
     main()
