@@ -18,7 +18,7 @@ def main():
 
     with open(sys.argv[1]) as f:
         rules = [rule.rstrip() for rule in f.readlines()]
-    patterns = [re.compile(rule.rstrip()) for rule in rules]
+    patterns = [re.compile(rule) for rule in rules]
 
     with multiprocessing.Pool(4) as pool:
         fn = lambda path: Snort.Search(path+".malware", Parser.Deserialize(path), rules, patterns)
