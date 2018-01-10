@@ -6,7 +6,6 @@ import multiprocessing
 import Parser
 import Snort
 
-dbg=True
 
 def main():
     '''
@@ -16,10 +15,7 @@ def main():
     if len(sys.argv) < 3:
         #sample data
         print("No arguments")
-        if dbg:
-            sys.argv = [None, "community_snort_rule/pcre", "../outside.tcpdump_tue.ascii_out.ser"]
-        else:
-            return
+        return
 
     with open(sys.argv[1]) as f:
         rules = [rule.rstrip() for rule in f.readlines()]

@@ -1,4 +1,5 @@
 import multiprocessing
+import pickle
 
 
 def Serialize(path, value):
