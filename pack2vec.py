@@ -21,7 +21,7 @@ def main():
         rules = [rule.rstrip() for rule in f.readlines()]
     patterns = [re.compile(rule) for rule in rules]
 
-    [Snort.Serialize(path, Snort.Search(Parser.Deserialize(path), patterns)) 
+    [Snort.Serialize(path + "_malware", Snort.Search(Parser.Deserialize(path), patterns)) 
     for path in sys.argv[2:] ]
 
     return
