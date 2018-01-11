@@ -44,15 +44,19 @@ def main():
                      for time, rule, matchPattern, payload in testPackets]
 
     matchPatterns = [packet[2] for packet in testPackets]
+    falseDetection = 0
     for words, pattern in zip(testWordsList, matchPatterns):
         try:
             dsnt_match = model.wv.doesnt_match(words)
             if dsnt_match == pattern:
                 print("오탐")
+                falseDetection += 1
             else:
                 print("Doesn't match:", dsnt_match, "Pattern:", pattern)
         except KeyError as e:
             print(e)
+
+    print("결과: 총 {}건의 테스트 패킷 중 doesn't match를 통해 스노트의 오탐을 {}건 발견함".format(len(testPackets), falseDetection))
     return
 
 if __name__ == "__main__":
