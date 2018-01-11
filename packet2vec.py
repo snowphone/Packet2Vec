@@ -1,5 +1,5 @@
 import Snort
-import Parser
+from Tcpdump import Serialize, Deserialize
 import sys
 import gensim.models.word2vec as w2v
 
@@ -29,7 +29,7 @@ def main():
 
     #get malware packets
     for path in sys.argv[2:]:
-        malware_packets = Parser.Deserialize(path)
+        malware_packets = Deserialize(path)
         malware_payloads = ExtractPayload(malware_packets)
         matched_string = [[packet[2]] for packet in malware_packets]
 
@@ -39,7 +39,7 @@ def main():
 
     model = w2v.Word2Vec(sentences=trainData,min_count=1)
 
-    testPackets = Parser.Deserialize(sys.argv[1])
+    testPackets = Deserialize(sys.argv[1])
     testWordsList = [SplitPayload(payload, wordLength, matchPattern)
                      for time, rule, matchPattern, payload in testPackets]
 
@@ -47,16 +47,16 @@ def main():
     falseDetection = 0
     for words, pattern in zip(testWordsList, matchPatterns):
         try:
-            dsnt_match = model.wv.doesnt_match(words)
-            if dsnt_match == pattern:
+            doesnt_match = model.wv.doesnt_match(words)
+            if doesnt_match == pattern:
                 print("오탐")
                 falseDetection += 1
             else:
-                print("Doesn't match:", dsnt_match, "Pattern:", pattern)
+                print("Doesn't match:", doesnt_match, "Pattern:", pattern)
         except KeyError as e:
             print(e)
 
-    print("결과: 총 {}건의 테스트 패킷 중 doesn't match를 통해 스노트의 오탐을 {}건 발견함".format(len(testPackets), falseDetection))
+    print("결과: 총 {}건 테스트 패킷 중 doesn't match를 통해 스노트의 오탐을 {}건 발견함".format(len()))
     return
 
 if __name__ == "__main__":
