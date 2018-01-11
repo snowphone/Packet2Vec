@@ -23,6 +23,9 @@ def main():
     '''
     인자: 검사용 페이로드, 학습용 페이로드
     '''
+    if len(sys.argv) < 2:
+        print("No arguments")
+        return 
 
     #get malware packets
     for path in sys.argv[2:]:
@@ -31,16 +34,21 @@ def main():
         matched_string = [[packet[2]] for packet in malware_packets]
 
     wordLength = 10
-    trainData = [SplitPayload(payload, wordLength,regexEngn) for time,rule,regexEngn,payload in malware_packets]
+    trainData = [SplitPayload(payload, wordLength, matchPattern)
+                 for time, rule, matchPattern, payload in malware_packets]
 
     model = w2v.Word2Vec(sentences=trainData,min_count=1)
 
-    packets = Parser.Deserialize(sys.argv[1])
-    sentences = [packet[-1] for packet in packets]
+    testPackets = Parser.Deserialize(sys.argv[1])
+    testWordsList = [SplitPayload(payload, wordLength, matchPattern)
+                     for time, rule, matchPattern, payload in testPackets]
 
-    for time, rule, matched, payload in packets:
-        print(model.wv.most_similar(positive=[matched],topn=1))
-
+    matchPatterns = [packet[2] for packet in testPackets]
+    for words, pattern in zip(testWordsList, matchPatterns):
+        try:
+            print("Doesn't match:",  model.wv.doesnt_match(words), "Pattern:", pattern)
+        except KeyError as e:
+            print(e)
     return
 
 if __name__ == "__main__":
