@@ -25,15 +25,8 @@ def main():
     '''
     if len(sys.argv) < 2:
         return
-
-    with open(sys.argv[1]) as f:
-        rules = [rule.rstrip() for rule in f.readlines()]
-    patterns = [re.compile(rule) for rule in rules]
-
-    [Snort.Serialize(path + "_malware", Snort.Search(Parser.Deserialize(path), patterns)) 
-    for path in sys.argv[2:] ]
-
- 
+    Inspect(sys.argv[1], sys.argv[2:])
+    return
 
 if __name__ == "__main__":
     main()
