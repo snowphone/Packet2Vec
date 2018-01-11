@@ -1,6 +1,5 @@
 import Snort
 import Parser
-import Inspect
 import sys
 import gensim.models.word2vec as w2v
 
@@ -22,9 +21,8 @@ def SplitPayload(payload, length=20, pattern=None):
 
 def main():
     '''
-    학습에 초점
+    인자: 검사용 페이로드, 학습용 페이로드
     '''
-    sys.argv = [None, "outside.tcpdump_fri.ascii_out.ser_malware", "inside.tcpdump_fri.ascii_out.ser_malware"]
 
     #get malware packets
     for path in sys.argv[2:]:
@@ -32,16 +30,16 @@ def main():
         malware_payloads = ExtractPayload(malware_packets)
         matched_string = [[packet[2]] for packet in malware_packets]
 
-    length = 40
-    trainData = [SplitPayload(payload, length,regexEngn) for time,rule,regexEngn,payload in malware_packets]
+    wordLength = 10
+    trainData = [SplitPayload(payload, wordLength,regexEngn) for time,rule,regexEngn,payload in malware_packets]
 
-    model = w2v.Word2Vec(sentences=trainData,min_count=0)
+    model = w2v.Word2Vec(sentences=trainData,min_count=1)
 
     packets = Parser.Deserialize(sys.argv[1])
     sentences = [packet[-1] for packet in packets]
 
     for time, rule, matched, payload in packets:
-        print(model.most_similar(positive=[matched]))
+        print(model.wv.most_similar(positive=[matched],topn=1))
 
     return
 
