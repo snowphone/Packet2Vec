@@ -46,7 +46,11 @@ def main():
     matchPatterns = [packet[2] for packet in testPackets]
     for words, pattern in zip(testWordsList, matchPatterns):
         try:
-            print("Doesn't match:",  model.wv.doesnt_match(words), "Pattern:", pattern)
+            dsnt_match = model.wv.doesnt_match(words)
+            if dsnt_match == pattern:
+                print("오탐")
+            else:
+                print("Doesn't match:", dsnt_match, "Pattern:", pattern)
         except KeyError as e:
             print(e)
     return
