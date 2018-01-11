@@ -1,5 +1,5 @@
 import Snort
-from Tcpdump import Serialize, Deserialize
+from tcpdump import Serialize, Deserialize
 import sys
 import gensim.models.word2vec as w2v
 
@@ -31,14 +31,9 @@ def main():
     falseDetection = 0
     for words, pattern in zip(testWordsList, matchPatterns):
         try:
-<<<<<<< HEAD
-            doesnt_match = model.wv.doesnt_match(words)
-            if doesnt_match == pattern:
-=======
             idx = words.index(matchPatterns)
             dsnt_match = model.wv.doesnt_match(words[idx-windowSize:idx+windowSize])
             if dsnt_match == pattern:
->>>>>>> 4a0b789c64f0f75e8e02a9b2f925421260639ad2
                 print("오탐")
                 falseDetection += 1
             else:
@@ -48,11 +43,7 @@ def main():
         except ValueError as e:
             print(e)
 
-<<<<<<< HEAD
-    print("결과: 총 {}건 테스트 패킷 중 doesn't match를 통해 스노트의 오탐을 {}건 발견함".format(len()))
-=======
     print("결과: 총 {}건의 테스트 패킷 중 doesn't match를 통해 snort의 오탐을 {}건 발견함".format(len(testPackets), falseDetection))
->>>>>>> 4a0b789c64f0f75e8e02a9b2f925421260639ad2
     return
 
 def ExtractPayload(packets):
