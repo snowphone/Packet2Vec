@@ -2,6 +2,8 @@ import re
 import sys
 import pickle
 '''
+tcpdump 파일을 파이썬에서 다룰수 있게 하는 것이 목표.
+
 변경점: 인자로 input, output 줄 경우 serialize 해서 리스트 저장
 변경점: 수신 아이피-포트에 non-greedy 캡쳐를 사용하여 가장 처음 발견하는 : 앞에서 멈추도록 함
 변경점: packet의 길이 요소를 제거
@@ -80,10 +82,11 @@ def Deserialize(filename):
     with open(filename, "rb") as f:
         ret = pickle.load(f)
     return ret
-        
 
-
-
+def Serialize(path, data):
+    with open(path,mode="wb+") as output:
+        pickle.dump(data, output)
+    return
 
 def main():
     '''
