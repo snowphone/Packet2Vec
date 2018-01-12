@@ -34,14 +34,9 @@ def Parse(filePath):
     bTestPacket = False
     cnt = 0
     length = len(lines)
-    unit = 0.01
-    threshold = unit
 
-    for line in lines:
-        cnt += 1
-        if cnt/length  >= threshold:
-            print("\r진행률:", cnt/length * 100, "%", end='')
-            threshold += unit
+    for idx, line in enumerate(lines):
+        print("\rProgress: {}/{} ({:.1f}%)".format(idx + 1, length, (idx+1)/length * 100), end='')
 
         headerInfo = hdrPattern.search(line)
         if headerInfo:
