@@ -4,17 +4,8 @@ import os
 import multiprocessing
 import pickle
 '''
-tcpdump 파일을 파이썬에서 다룰수 있게 하는 것이 목표.
-
-변경점: 인자로 input, output 줄 경우 serialize 해서 리스트 저장
-변경점: 수신 아이피-포트에 non-greedy 캡쳐를 사용하여 가장 처음 발견하는 : 앞에서 멈추도록 함
-변경점: packet의 길이 요소를 제거
-'''
-
-'''
 [packet for packet in packets] 의 형태로 파싱
 각 패킷은  [시간, 송신 IP.port, 수신 IP.port, payload] 의 형태로 저장되어 있다.
-Get() 메소드를 통하여 리스트를 가져올 수 있다.
 '''
 def Unpack(path):
     '''
