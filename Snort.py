@@ -1,5 +1,5 @@
 import multiprocessing
-import Tcpdump
+import tcpdump
 import pickle
 import re
 
