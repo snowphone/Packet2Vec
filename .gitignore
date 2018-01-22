@@ -1,0 +1,8 @@
+trainData
+personal_snort_rule
+getPattern.sh
+__pycache__
+inside.tcpdump_fri.ascii_out.ser_malware
+outside.tcpdump_fri.ascii_out.ser_malware
+.vscode/
+
