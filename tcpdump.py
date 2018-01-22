@@ -34,13 +34,9 @@ def Parse(filePath):
     bTestPacket = False
     cnt = 0
     length = len(lines)
-    threshold = 0.1
 
-    for line in lines:
-        cnt += 1
-        if cnt/length  >= threshold:
-            print("진행률:", cnt/length * 100, "%")
-            threshold += 0.1
+    for idx, line in enumerate(lines):
+        print("\rProgress: {}/{} ({:.1f}%)".format(idx + 1, length, (idx+1)/length * 100), end='')
 
         headerInfo = hdrPattern.search(line)
         if headerInfo:
@@ -75,9 +71,12 @@ def Serialize(path, data):
 def main():
     p = multiprocessing.Pool()
     #p.map(Unpack, sys.argv[1:])
-    parsed = p.map(Parse, sys.argv[1:])
+    packets_list = p.map(Parse, sys.argv[1:])
     names = [name+".ser" for name in sys.argv[1:]]
-    p.starmap(Serialize, zip(names, parsed))
+    #p.starmap(Serialize, zip(names, packets_list))
+    for packets in packets_list:
+        for packet in packets:
+            print(packet[-1])
 
     print("Done!")
     return
