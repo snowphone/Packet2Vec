@@ -1,32 +1,37 @@
 import multiprocessing
+import concurrent.futures as futures
 import tcpdump
 import pickle
 import re
+from itertools import repeat
 
-def __examine_packet__(packet, patterns, lastTime):
+def Inspect_packet_by_patterns(packet, patterns, lastTime=None):
     '''
-    한 패킷에 대해 모든 정규식 검사를 진행한다.
+    주어진 정규식 리스트 각각에 주어진 패킷을 대입해보고, 가장 처음으로 매칭된 정규식과 함께 반환한다.
+    반환 타입: (패킷 시각정보, 정규식, 매칭패턴, 페이로드)
     '''
     payload = packet[-1]
-    print("checking for", packet[0], "last packet:", lastTime)
+    if lastTime is None:
+        print("checking for", packet[0])
+    else:
+        print("checking for", packet[0], "last packet:", lastTime)
+
     for regexEngn in patterns:
         cand = regexEngn.search(payload)
         if cand:
             return (packet[0], regexEngn.pattern, cand.group(), payload)
     return None
 
-def Inspect(packets, patterns):
+def Inspect_packets(pattern, packets):
     '''
-    입력된 패킷들에 대하여 
-    snort_rule에 걸리는 패킷을 모아 (패킷 시각, 정규식, 일치한 패턴, 페이로드)를 리스트에 모아 반환한다.
+    하나의 정규식과 여러 패킷이 들어왔을 때, 정규식에 매칭되는 모든 패킷들을 반환한다.
+    반환 형식은 배칭된 패킷들의 리스트이다.
     '''
 
-    pool = multiprocessing.Pool()  #worker의 수를 자동으로 선택
-
-    records = ((packet, patterns, packets[-1][0]) for packet in packets) 
-    malware_packet = [tpl for tpl in pool.starmap(__examine_packet__, records) if tpl ] 
-
-    return malware_packet
+    pool = futures.ThreadPoolExecutor()
+    payloads = (packet[-1] for packet in packets)
+    search_result= pool.map(lambda payload: pattern.search(payload), payloads)
+    return [payload for payload, ret in zip(payloads, search_result) if ret]
 
 def ExtractRule(snort_rule_path):
     f = open(snort_rule_path)
