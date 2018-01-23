@@ -80,9 +80,9 @@ def ExtractRules(snort_rule_path):
 
 def Parallel_Inspect(patterns, packets):
     '''
-	인자: 정규식 엔진 리스트, 패킷 리스트
+    인자: 정규식 엔진 리스트, 패킷 리스트
     여려 정규식 패턴이 들어왔을 때, 병렬적으로 Inspect_packets을 수행한다.
-	(걸러진 payload 리스트, 정규식)으로 이루어진 리스트를 반환한다.
+    (걸러진 payload 리스트, 정규식)으로 이루어진 리스트를 반환한다.
     '''
     _lock = multiprocessing.Lock()     #mutex
     _cnt = multiprocessing.Value('i', 0)
@@ -100,4 +100,4 @@ if __name__ == "__main__":
     patterns = (re.compile(rule) for rule in rules)
     packets = tcpdump.Deserialize(argv[2])
     Parallel_Inspect(patterns, packets)
-	print("Done!")
+    print("Done!")
