@@ -2,6 +2,7 @@ import multiprocessing
 from functools import wraps
 import tcpdump
 import pickle
+from time import time
 import re
 from itertools import repeat, starmap
 
@@ -23,32 +24,23 @@ class _Inspector:
         else:
             return None
 
-def _init(_lock, _cnt):
-    '''
-    파이썬에서 multiprocessing.Lock() 객체는 non-picklable 하다. 
-    pool을 통해 프로세스 생성시 공유된 뮤텍스 및 카운터를 사용하기 위해 사용된다.
-    '''
-    global lock, cnt
-    lock = _lock
-    cnt = _cnt
-    return
-
-def function_counter(func):
+def traceProgress(func):
     '''
     함수가 호출된 횟수를 콘솔에 반환한다.
     병렬 프로그래밍에 적합하도록 짜여졌다.
-    _init 함수가 필수적이다.
     '''
-    @wraps(func)
-    def nested_func(*args, **kwargs):
-        ret = func(*args, **kwargs)
-        with lock:
-            cnt.value += 1
-            print("\r'{}' is called {} times.".format(nested_func.__name__, cnt.value), end='')
-        return ret
-    return nested_func
 
-@function_counter 
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        begin = time()
+        ret = func(*args, **kwargs)
+        end=time()
+        print("\rjob: {}\telapsed time: {:.3f} seconds\ttotal elapsed time: {:.3f} seconds".format(func.__name__, end-begin, end-wrapper.begin), end='')
+        return ret
+    wrapper.begin = time()
+    return wrapper
+
+@traceProgress 
 def Inspect_packets(pattern, packets):
     '''
     하나의 정규식과 여러 패킷이 들어왔을 때, 정규식에 매칭되는 모든 패킷들을 반환한다.
@@ -84,9 +76,7 @@ def Parallel_Inspect(patterns, packets):
     여려 정규식 패턴이 들어왔을 때, 병렬적으로 Inspect_packets을 수행한다.
     (걸러진 payload 리스트, 정규식)으로 이루어진 리스트를 반환한다.
     '''
-    _lock = multiprocessing.Lock()     #mutex
-    _cnt = multiprocessing.Value('i', 0)
-    pool = multiprocessing.Pool(initializer=_init, initargs=(_lock, _cnt))
+    pool = multiprocessing.Pool()
     ret_list = pool.starmap(Inspect_packets, zip(patterns, repeat(packets)))
     return [(payloads, pattern.pattern) for payloads, pattern in zip(ret_list, patterns)]
 
