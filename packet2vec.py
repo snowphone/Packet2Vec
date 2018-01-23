@@ -1,54 +1,41 @@
-import Snort
+import snort
+import tcpdump
 from tcpdump import Serialize, Deserialize
-import sys
-import gensim.models.word2vec as w2v
+from sys import argv
+import gensim.models.doc2vec as d2v
+import re
+
 
 def main():
+    rule_path = argv[1]
+    packet_path = argv[2]
+
+    rules = snort.ExtractRules(rule_path)
+
+    patterns = map(re.compile, rules)
+
+    packets = Deserialize(packet_path)
+
+    model = Train(patterns, packets)
+
+def Train(patterns, packets):
     '''
-    인자: 검사용 페이로드, 학습용 페이로드
+    인자: 정규식 엔진 리스트, 패킷 리스트
+    정규식 엔진들과 패킷들을 받아
+    정규식을 doc ID로, 그 정규식에 걸러진 payload들을 단어로 삼아 학습시킨 Doc2Vec 객체를 반환한다.
     '''
-    if len(sys.argv) < 2:
-        print("No arguments")
-        return 
+    payloads = (packet[-1] for packet in packets)
 
-    #get malware packets
-    for path in sys.argv[2:]:
-        malware_packets = Deserialize(path)
-        malware_payloads = ExtractPayload(malware_packets)
-        matched_string = [[packet[2]] for packet in malware_packets]
+    cnt_fn = lambda i : print("\r{}".format(i), end="")
 
-    wordLength = 20
-    trainData = [SplitPayload(payload, wordLength, matchPattern)
-                 for time, rule, matchPattern, payload in malware_packets]
-    windowSize = 5
-    model = w2v.Word2Vec(sentences=trainData,window=windowSize)
+    #리스트 내의 원소: (걸러진 패이로드들, 정규식)
+    mal_records = [(snort.Inspect_packets(pattern,packets), pattern.pattern) for idx, pattern in enumerate(patterns) if True or cnt_fn(idx)]
 
-    testPackets = Deserialize(sys.argv[1])
-    testWordsList = [SplitPayload(payload, wordLength, matchPattern)
-                     for time, rule, matchPattern, payload in testPackets]
+    sentences = [d2v.TaggedDocument(payloads, [rule]) for payloads, rule in mal_records]
+    return d2v.Doc2Vec(sentences)
 
-    matchPatterns = [packet[2] for packet in testPackets]
-    falseDetection = 0
-    for words, pattern in zip(testWordsList, matchPatterns):
-        try:
-            idx = words.index(matchPatterns)
-            dsnt_match = model.wv.doesnt_match(words[idx-windowSize:idx+windowSize])
-            if dsnt_match == pattern:
-                print("오탐")
-                falseDetection += 1
-            else:
-                print("Doesn't match:", doesnt_match, "Pattern:", pattern)
-        except KeyError as e:
-            print(e)
-        except ValueError as e:
-            print(e)
 
-    print("결과: 총 {}건의 테스트 패킷 중 doesn't match를 통해 snort의 오탐을 {}건 발견함".format(len(testPackets), falseDetection))
-    return
-
-def ExtractPayload(packets):
-    return [packet[-1] for packet in packets]
-
+@DeprecationWarning
 def SplitPayload(payload, length=20, pattern=None):
     '''
     payload를 length 단위로 잘라 string list로 반환한다.

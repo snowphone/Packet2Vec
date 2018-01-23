@@ -47,16 +47,22 @@ def Inspect_packets(pattern, packets):
     pool = ProcessPoolExecutor()
     return [payload for payload in pool.map(_Inspector(pattern), payloads) if payload is not None]
     
-def ExtractRule(snort_rule_path):
+def ExtractRules(snort_rule_path):
+    '''
+    인자: snort_rule 파일 경로
+    정규식을 추출해 리스트로 반환한다.
+    '''
     f = open(snort_rule_path)
     lines = f.readlines()
     regexEngn = re.compile(r'(?<=pcre:").*?(?="[;,])')
 
-    return [pattern.group() for pattern in map(regexEngn.search, lines) if pattern]
+    ret = [pattern.group() for pattern in map(regexEngn.search, lines) if pattern]
+    f.close()
+    return ret
 
 if __name__ == "__main__":
     from sys import argv
-    rules = ExtractRule(argv[1])
+    rules = ExtractRules(argv[1])
     patterns = (re.compile(rule) for rule in rules)
     packets = tcpdump.Deserialize(argv[2])
     for pattern in patterns:
