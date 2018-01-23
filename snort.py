@@ -1,29 +1,11 @@
 import multiprocessing
-from concurrent.futures import ProcessPoolExecutor
+from functools import wraps
 import tcpdump
 import pickle
 import re
-from itertools import repeat
+from itertools import repeat, starmap
 
-@DeprecationWarning
-def Inspect_packet_by_patterns(packet, patterns, lastTime=None):
-    '''
-    주어진 정규식 리스트 각각에 주어진 패킷을 대입해보고, 가장 처음으로 매칭된 정규식과 함께 반환한다.
-    반환 타입: (패킷 시각정보, 정규식, 매칭패턴, 페이로드)
-    '''
-    payload = packet[-1]
-    if lastTime is None:
-        print("checking for", packet[0])
-    else:
-        print("checking for", packet[0], "last packet:", lastTime)
-
-    for regexEngn in patterns:
-        cand = regexEngn.search(payload)
-        if cand:
-            return (packet[0], regexEngn.pattern, cand.group(), payload)
-    return None
-
-class _Inspector():
+class _Inspector:
     '''
     파이썬의 멀티프로세싱 모듈을 사용하기 위해선 전역으로 선언된 객체를 이용해야 한다.
     따라서 클래스를 이용하여 nested function을 구현하였다.
@@ -31,21 +13,57 @@ class _Inspector():
     def __init__(self, pattern):
         self.pattern = pattern
         return
+
     def __call__(self, payload):
+        '''
+        정규식에 payload가 일치하는지 찾고 일치한다면 그 payload를 반환한다.
+        '''
         if self.pattern.search(payload):
             return payload
         else:
             return None
 
+def _init(_lock, _cnt):
+    '''
+    파이썬에서 multiprocessing.Lock() 객체는 non-picklable 하다. 
+    pool을 통해 프로세스 생성시 공유된 뮤텍스 및 카운터를 사용하기 위해 사용된다.
+    '''
+    global lock, cnt
+    lock = _lock
+    cnt = _cnt
+    return
+
+def function_counter(func):
+    '''
+    함수가 호출된 횟수를 콘솔에 반환한다.
+    병렬 프로그래밍에 적합하도록 짜여졌다.
+    _init 함수가 필수적이다.
+    '''
+    @wraps(func)
+    def nested_func(*args, **kwargs):
+        ret = func(*args, **kwargs)
+        with lock:
+            cnt.value += 1
+            print("\r'{}' is called {} times.".format(nested_func.__name__, cnt.value), end='')
+        return ret
+    return nested_func
+
+@function_counter 
 def Inspect_packets(pattern, packets):
     '''
     하나의 정규식과 여러 패킷이 들어왔을 때, 정규식에 매칭되는 모든 패킷들을 반환한다.
-    반환 형식은 배칭된 패킷들의 리스트이다.
+    반환 형식은 매칭된 패킷들의 리스트이다.
     '''
-
-    payloads = (packet[-1] for packet in packets)
-    pool = ProcessPoolExecutor()
-    return [payload for payload in pool.map(_Inspector(pattern), payloads) if payload is not None]
+    payloads = [packet[-1] for packet in packets]
+    length = len(payloads)
+    '''
+    pool = multiprocessing.Pool(12)
+    return [payload 
+            for payload 
+            in pool.starmap(_Inspector(pattern, length), enumerate(payloads, 1))
+            if payload is not None]
+            '''
+    return [payload for payload in map(_Inspector(pattern), payloads) if payload is not None]
     
 def ExtractRules(snort_rule_path):
     '''
@@ -60,10 +78,24 @@ def ExtractRules(snort_rule_path):
     f.close()
     return ret
 
+def Parallel_Inspect(patterns, packets):
+    '''
+    여려 정규식 패턴이 들어왔을 때, 병렬적으로 Inspect_packets을 수행한다.
+    '''
+    _lock = multiprocessing.Lock()     #mutex
+    _cnt = multiprocessing.Value('i', 0)
+    pool = multiprocessing.Pool(initializer=_init, initargs=(_lock, _cnt))
+    ret_list = pool.starmap(Inspect_packets, zip(patterns, repeat(packets)))
+    return [(payloads, pattern.pattern) for payloads, pattern in zip(ret_list, patterns)]
+
+
 if __name__ == "__main__":
     from sys import argv
-    rules = ExtractRules(argv[1])
+
+    with open(argv[1]) as f:
+        rules = f.readlines()
+        rules = [rule.rstrip() for rule in rules]
     patterns = (re.compile(rule) for rule in rules)
     packets = tcpdump.Deserialize(argv[2])
-    for pattern in patterns:
-        print(Inspect_packets(pattern, packets))
+    Parallel_Inspect(patterns, packets)
+	print("Done!")
