@@ -30,18 +30,21 @@ def traceProgress(func):
 	wrapper.begin = time()
 	return wrapper
 
+@tracer
 def Deserialize(filename):
     ''' pickle을 통해 역 직렬화 함 '''
     with open(filename, "rb") as f:
         ret = pickle.load(f)
     return ret
 
+@tracer
 def Serialize(path, data):
     '''pickle을 통해 직렬화 하여 파일로 저장한다.'''
     with open(path,mode="wb+") as output:
         pickle.dump(data, output)
     return
 
+@tracer
 def Concat(*iterable):
     '''입력받은 인자들을 결합하여 반환한다.'''
     return reduce(lambda x,y: x+y, iterable)
