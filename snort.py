@@ -1,22 +1,8 @@
 import multiprocessing
-from functools import wraps
 import tcpdump
-import pickle
-from time import time
 import re
 from itertools import repeat, starmap
-
-def tracer(func):
-	'''
-	함수의 진입 및 퇴출을 추적및 시각화한다.
-	'''
-	@wraps(func)
-	def wrapper(*args, **kwargs):
-		print("\n{} in".format(func.__name__))
-		ret = func(*args, **kwargs)
-		print("\n{} out".format(func.__name__))
-		return ret
-	return wrapper
+from commonfunctions import *
 
 class _Inspector(object):
 	'''
@@ -36,20 +22,6 @@ class _Inspector(object):
 		else:
 			return None
 
-def traceProgress(func):
-	'''
-	함수 호출에 걸리는 소요시간 및 누적 호출에 따른 누적 소요시간을 반환한다.
-	'''
-	@wraps(func)
-	def wrapper(*args, **kwargs):
-		begin = time()
-		ret = func(*args, **kwargs)
-		end=time()
-		print("\rJob: {}, Elapsed time: {:.3f}s, Total elapsed time: {:.3f} s".format(func.__name__, end - begin, end - wrapper.begin), end='')
-		return ret
-	wrapper.begin = time()
-	return wrapper
-
 @traceProgress 
 def Inspect_packets(pattern, packets):
 	'''
@@ -58,33 +30,24 @@ def Inspect_packets(pattern, packets):
 	'''
 	payloads = [packet[-1] for packet in packets]
 	length = len(payloads)
-	'''
-	pool = multiprocessing.Pool()
-	return [payload 
-			for payload 
-			in pool.starmap(_Inspector(pattern, length), enumerate(payloads, 1))
-			if payload is not None]
-			'''
+
 	return tuple(payload for payload in map(_Inspector(pattern), payloads) if payload is not None)
 	
 def ExtractRules(snort_rule_path):
 	'''
-	인자: snort_rule 파일 경로
+	snort_rule 파일 경로를 인자로 받아
 	정규식을 추출해 리스트로 반환한다.
 	'''
-	f = open(snort_rule_path)
-	lines = f.readlines()
+	with open(snort_rule_path) as f:
+		lines = f.readlines()
 	regexEngn = re.compile(r'(?<=pcre:").*?(?="[;,])')
 
 	ret = (pattern.group() for pattern in map(regexEngn.search, lines) if pattern)
-	f.close()
 	return ret
 
 @tracer
 def CompileRules(rules):
-	'''
-	반복 가능한 정규식 인자들을 받아, 정규식 엔진으로 반환한다.
-	'''
+	''' 반복 가능한 정규식 인자들을 받아, 정규식 엔진으로 반환한다. '''
 	return tuple(map(re.compile, rules))
 
 @tracer
@@ -98,7 +61,6 @@ def InspectInParallel(patterns, packets):
 		ret_list = pool.starmap(Inspect_packets, zip(patterns, repeat(packets)))
 	return tuple((payloads, pattern.pattern) for payloads, pattern in zip(ret_list, patterns))
 
-
 if __name__ == "__main__":
 	from sys import argv
 
@@ -106,5 +68,5 @@ if __name__ == "__main__":
 		rules = f.readlines()
 		rules = [rule.rstrip() for rule in rules]
 	patterns = (re.compile(rule) for rule in rules)
-	packets = tcpdump.Deserialize(argv[2])
+	packets = Deserialize(argv[2])
 	InspectInParallel(patterns, packets)

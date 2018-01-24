@@ -2,15 +2,13 @@ import re
 import sys
 import os
 import multiprocessing
-import pickle
+from commonfunctions import *
 '''
 [packet for packet in packets] 의 형태로 파싱
 각 패킷은  [시간, 송신 IP.port, 수신 IP.port, payload] 의 형태로 저장되어 있다.
 '''
 def Unpack(path):
-    '''
-    tcpdump를 이용해 .unpacked 확장자로 언팩한다.
-    '''
+    ''' tcpdump를 이용해 .unpacked 확장자로 언팩한다. '''
     try:
         os.system("tcpdump -A -r " + path + " > " + path + ".unpacked")
     except:
@@ -55,18 +53,7 @@ def Parse(filePath):
     return ret
 
 
-def Deserialize(filename):
-    '''
-    pickle을 통해 역 직렬화 함
-    '''
-    with open(filename, "rb") as f:
-        ret = pickle.load(f)
-    return ret
 
-def Serialize(path, data):
-    with open(path,mode="wb+") as output:
-        pickle.dump(data, output)
-    return
 
 def main():
     p = multiprocessing.Pool()

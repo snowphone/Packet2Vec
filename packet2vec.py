@@ -3,19 +3,19 @@ import tcpdump
 import multiprocessing as mp
 from functools import reduce, partial, update_wrapper 
 from itertools import starmap, repeat
-from tcpdump import Serialize, Deserialize
+from commonfunctions import *
 from sys import argv
 import gensim.models.doc2vec as d2v
 import re
 
 def main():
+	'''
 	assert len(argv) >= 3
 	rule_path = argv[1]
 	packet_paths = argv[2:]
 	'''
 	rule_path = "community_snort_rule/pcre"
 	packet_paths = ["inside.tcpdump_wed.ascii_out.ser"]
-	'''
 
 	with open(rule_path) as f:
 		rules = f.readlines()
@@ -27,7 +27,7 @@ def main():
 	with mp.Pool() as pool:
 		packets_list = pool.map(Deserialize, packet_paths)
 
-	packets = reduce(lambda x,y: x+y, packets_list)
+	packets = Concat(*packets_list)
 
 	mal_records = InspectInParallel(patterns, packets)
 	
