@@ -3,7 +3,7 @@ import tcpdump
 import multiprocessing as mp
 from functools import reduce, partial, update_wrapper 
 from itertools import starmap, repeat
-from tcpdump import Serialize, Deserialize
+from commonfunctions import *
 from sys import argv
 import gensim.models.doc2vec as d2v
 import re
@@ -27,7 +27,7 @@ def main():
 	with mp.Pool() as pool:
 		packets_list = pool.map(Deserialize, packet_paths)
 
-	packets = reduce(lambda x,y: x+y, packets_list)
+	packets = Concat(*packets_list)
 
 	mal_records = InspectInParallel(patterns, packets)
 	
