@@ -33,7 +33,7 @@ def main():
 	
 	sentences = [d2v.TaggedDocument(payloads, [rule]) for payloads, rule in mal_records]
 	Serialize("data.dat", sentences)
-	print("\n", sentences)
+	print("\n", *sentences, sep='\n')
 
 
 def Train(patterns, packets):
