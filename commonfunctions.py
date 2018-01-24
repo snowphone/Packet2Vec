@@ -5,29 +5,29 @@
 import pickle
 from functools import wraps, reduce
 from time import time
+from os import getpid
 
 def tracer(func):
 	''' 함수의 진입 및 퇴출을 추적및 시각화한다. '''
 	@wraps(func)
 	def wrapper(*args, **kwargs):
-		print("\n{} in".format(func.__name__))
+		print("PID: {},\tenter {}".format(getpid(), func.__name__))
 		ret = func(*args, **kwargs)
-		print("\n{} out".format(func.__name__))
+		print("PID: {},\texit {}".format(getpid(), func.__name__))
 		return ret
 	return wrapper
 
 def traceProgress(func):
 	'''
-	함수 호출에 걸리는 소요시간 및 누적 호출에 따른 누적 소요시간을 반환한다.
+	함수 호출에 걸리는 소요시간을 출력한다.
 	'''
 	@wraps(func)
 	def wrapper(*args, **kwargs):
 		begin = time()
 		ret = func(*args, **kwargs)
 		end=time()
-		print("\rJob: {}, Elapsed time: {:.3f}s, Total elapsed time: {:.3f} s".format(func.__name__, end - begin, end - wrapper.begin), end='')
+		print("{}(PID: {}) takes {:.3f}s".format(func.__name__, getpid(), end - begin))
 		return ret
-	wrapper.begin = time()
 	return wrapper
 
 @tracer

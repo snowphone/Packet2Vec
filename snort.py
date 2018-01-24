@@ -22,7 +22,7 @@ class _Inspector(object):
 		else:
 			return None
 
-@traceProgress 
+@tracer
 def Inspect_packets(pattern, packets):
 	'''
 	하나의 정규식과 여러 패킷이 들어왔을 때, 정규식에 매칭되는 모든 패킷들을 반환한다.
@@ -51,6 +51,7 @@ def CompileRules(rules):
 	return tuple(map(re.compile, rules))
 
 @tracer
+@traceProgress
 def InspectInParallel(patterns, packets):
 	'''
 	인자: 정규식 엔진 리스트, 패킷 리스트
