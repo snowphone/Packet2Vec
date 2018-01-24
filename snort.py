@@ -7,28 +7,16 @@ import re
 from itertools import repeat, starmap
 
 def tracer(func):
+	'''
+	함수의 진입 및 퇴출을 추적및 시각화한다.
+	'''
 	@wraps(func)
-	def wrapper(*args):
-		print("\nenter {}".format(func.__name__))
-		ret = func(*args)
-		print("\nescape {}".format(func.__name__))
+	def wrapper(*args, **kwargs):
+		print("\n{} in".format(func.__name__))
+		ret = func(*args, **kwargs)
+		print("\n{} out".format(func.__name__))
 		return ret
 	return wrapper
-
-def tracer_class(object):
-	'''
-	class version of tracer
-	'''
-	def __init__(self, func):
-		self.func= func
-		functools.update_wrapper(self.func, func)
-		return
-	
-	def __call__(self, *args, **kwargs):
-		print("\nenter {}".format(self.func.__name__))
-		ret = self.func(*args, **kwargs)
-		print("\nescape {}".format(self.func.__name__))
-		return ret
 
 class _Inspector(object):
 	'''
@@ -50,16 +38,14 @@ class _Inspector(object):
 
 def traceProgress(func):
 	'''
-	함수가 호출된 횟수를 콘솔에 반환한다.
-	병렬 프로그래밍에 적합하도록 짜여졌다.
+	함수 호출에 걸리는 소요시간 및 누적 호출에 따른 누적 소요시간을 반환한다.
 	'''
-
 	@wraps(func)
 	def wrapper(*args, **kwargs):
 		begin = time()
 		ret = func(*args, **kwargs)
 		end=time()
-		print("\rjob: {} elapsed time: {:.3f} seconds total elapsed time: {:.3f} seconds".format(func.__name__, end - begin, end - wrapper.begin), end='')
+		print("\rJob: {}, Elapsed time: {:.3f}s, Total elapsed time: {:.3f} s".format(func.__name__, end - begin, end - wrapper.begin), end='')
 		return ret
 	wrapper.begin = time()
 	return wrapper
@@ -90,18 +76,25 @@ def ExtractRules(snort_rule_path):
 	lines = f.readlines()
 	regexEngn = re.compile(r'(?<=pcre:").*?(?="[;,])')
 
-	ret = [pattern.group() for pattern in map(regexEngn.search, lines) if pattern]
+	ret = (pattern.group() for pattern in map(regexEngn.search, lines) if pattern)
 	f.close()
 	return ret
 
-@tracer_class  
-def Parallel_Inspect(patterns, packets):
+@tracer
+def CompileRules(rules):
+	'''
+	반복 가능한 정규식 인자들을 받아, 정규식 엔진으로 반환한다.
+	'''
+	return tuple(map(re.compile, rules))
+
+@tracer
+def InspectInParallel(patterns, packets):
 	'''
 	인자: 정규식 엔진 리스트, 패킷 리스트
 	여려 정규식 패턴이 들어왔을 때, 병렬적으로 Inspect_packets을 수행한다.
 	(걸러진 payload 리스트, 정규식)으로 이루어진 리스트를 반환한다.
 	'''
-	with multiprocessing.Pool(6) as pool:
+	with multiprocessing.Pool() as pool:
 		ret_list = pool.starmap(Inspect_packets, zip(patterns, repeat(packets)))
 	return tuple((payloads, pattern.pattern) for payloads, pattern in zip(ret_list, patterns))
 
@@ -114,4 +107,4 @@ if __name__ == "__main__":
 		rules = [rule.rstrip() for rule in rules]
 	patterns = (re.compile(rule) for rule in rules)
 	packets = tcpdump.Deserialize(argv[2])
-	Parallel_Inspect(patterns, packets)
+	InspectInParallel(patterns, packets)
