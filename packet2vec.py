@@ -1,5 +1,4 @@
-import snort
-from snort import Parallel_Inspect 
+from snort import InspectInParallel, CompileRules
 import tcpdump
 import multiprocessing as mp
 from functools import reduce, partial, update_wrapper 
@@ -10,22 +9,28 @@ import gensim.models.doc2vec as d2v
 import re
 
 def main():
+	assert len(argv) >= 3
 	rule_path = argv[1]
 	packet_paths = argv[2:]
+	'''
+	rule_path = "community_snort_rule/pcre"
+	packet_paths = ["inside.tcpdump_wed.ascii_out.ser"]
+	'''
 
 	with open(rule_path) as f:
 		rules = f.readlines()
 	rules = map(lambda x: x.rstrip(), rules)
-	patterns = map(re.compile, rules)
+
+	patterns = CompileRules(rules)
+
 
 	with mp.Pool() as pool:
 		packets_list = pool.map(Deserialize, packet_paths)
+
+	packets = reduce(lambda x,y: x+y, packets_list)
+
+	mal_records = InspectInParallel(patterns, packets)
 	
-	with mp.Pool(2) as p:
-		mal_records_list = p.starmap(Parallel_Inspect, zip(repeat(patterns), packets_list) )
-
-	mal_records = reduce(lambda x,y: x+y, mal_records_list)
-
 	sentences = [d2v.TaggedDocument(payloads, [rule]) for payloads, rule in mal_records]
 	Serialize("data.dat", sentences)
 	print("\n", sentences)
@@ -39,8 +44,7 @@ def Train(patterns, packets):
 	'''
 
 	#리스트 내의 원소: (걸러진 패이로드들, 정규식)
-	mal_records = snort.Parallel_Inspect(patterns, packets)
-
+	mal_records = InspectInParallel(patterns, packets)
 	sentences = [d2v.TaggedDocument(payloads, [rule]) for payloads, rule in mal_records]
 	return d2v.Doc2Vec(sentences)
 
