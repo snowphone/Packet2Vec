@@ -27,11 +27,13 @@ def main():
 	with mp.Pool() as pool:
 		packets_list = pool.map(Deserialize, packet_paths)
 
-	packets = Concat(*packets_list)
 
-	mal_records = InspectInParallel(patterns, packets)
+	mal_records_list = map(partial(InspectInParallel, patterns), packets_list)
+	mal_records = Concat(*mal_records_list)
 	
-	sentences = [d2v.TaggedDocument(payloads, [rule]) for payloads, rule in mal_records]
+	sentences = [d2v.TaggedDocument(payloads, [rule]) 
+	for payloads, rule in mal_records 
+	if payloads ]
 	Serialize("data.dat", sentences)
 	print("\n", *sentences, sep='\n')
 
