@@ -1,4 +1,4 @@
-import multiprocessing
+from multiprocessing import Pool, cpu_count
 import tcpdump
 import re
 from itertools import repeat, starmap
@@ -58,8 +58,9 @@ def InspectInParallel(patterns, packets):
 	여려 정규식 패턴이 들어왔을 때, 병렬적으로 Inspect_packets을 수행한다.
 	(걸러진 payload 리스트, 정규식)으로 이루어진 리스트를 반환한다.
 	'''
-	with multiprocessing.Pool() as pool:
-		ret_list = pool.starmap(Inspect_packets, zip(patterns, repeat(packets)))
+	workers = cpu_count()
+	with Pool(workers) as pool:
+		ret_list = pool.starmap(Inspect_packets, zip(patterns, repeat(packets)), chunksize=len(patterns)//workers )
 	return tuple((payloads, pattern.pattern) for payloads, pattern in zip(ret_list, patterns))
 
 if __name__ == "__main__":
