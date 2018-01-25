@@ -9,33 +9,17 @@ import gensim.models.doc2vec as d2v
 import re
 
 def main():
+	'''
 	assert len(argv) >= 3
 	rule_path = argv[1]
 	packet_paths = argv[2:]
-	'''
 	rule_path = "community_snort_rule/pcre"
 	packet_paths = ["inside.tcpdump_wed.ascii_out.ser"]
 	'''
+	sentences = Deserialize(argv[1])
 
-	with open(rule_path) as f:
-		rules = f.readlines()
-	rules = map(lambda x: x.rstrip(), rules)
-
-	patterns = CompileRules(rules)
-
-
-	with mp.Pool() as pool:
-		packets_list = pool.map(Deserialize, packet_paths)
-
-
-	mal_records_list = map(partial(InspectInParallel, patterns), packets_list)
-	mal_records = Concat(*mal_records_list)
-	
-	sentences = [d2v.TaggedDocument(payloads, [rule])
-              for payloads, rule in mal_records
-              if payloads]
-	Serialize("data.dat", sentences)
-	print("\n", *sentences, sep='\n')
+	model = Train(sentences)
+	model.save("savedModel")
 
 
 def Train(patterns, packets):
@@ -48,8 +32,10 @@ def Train(patterns, packets):
 	#리스트 내의 원소: (걸러진 패이로드들, 정규식)
 	mal_records = InspectInParallel(patterns, packets)
 	sentences = [d2v.TaggedDocument(payloads, [rule]) for payloads, rule in mal_records]
-	return d2v.Doc2Vec(sentences)
+	return Train(sentences)
 
+def Train(sentences):
+	return d2v.Doc2Vec(sentences, min_count=1)
 
 @DeprecationWarning
 def SplitPayload(payload, length=20, pattern=None):
